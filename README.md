@@ -1,6 +1,6 @@
 # Redis-rb-cluster
 
-Redis Cluster client work in progress. If you'd like to send a PR to the repository, please send it to `read-slave` branch. The `read-slave` branch is also the one that is waiting for being merged to upstream.
+Redis Cluster client work in progress. __If you'd like to send a PR to the repository, please send it to `read-slave` branch. The `read-slave` branch is also the one that is waiting for being merged to upstream.__
 
 It wraps Redis-rb, and eventually should be part of it.
 
