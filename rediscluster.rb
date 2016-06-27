@@ -380,8 +380,8 @@ class RedisCluster
     send_cluster_command([:psetex, key, millisec, value])
   end
 
-  def set(key, value)
-    send_cluster_command([:set, key, value])
+  def set(key, value, options = {})
+    send_cluster_command([:set, key, value, options])
   end
 
   def mset(*args)
@@ -638,7 +638,7 @@ class RedisCluster
   end
 
   def zremrangebyscore(key, min, max)
-    send_cluster_command([:zremrangebystore, key, start, stop])
+    send_cluster_command([:zremrangebystore, key, min, max])
   end
 
   def zrevrange(key, start, stop, options = {})
