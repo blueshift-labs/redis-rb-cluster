@@ -599,6 +599,10 @@ class RedisCluster
       master_only: false)
   end
 
+  def zrangethenrem(key, start, stop, options = {})
+    send_cluster_command([:zrangethenrem, key, start, stop, options])
+  end
+
   def zrangebylex(key, min, max, options = {})
     send_cluster_command([:zrangebylex, key, min, max, options],
       master_only: false)
@@ -612,6 +616,10 @@ class RedisCluster
   def zrangebyscore(key, min, max, options = {})
     send_cluster_command([:zrangebyscore, key, min, max, options],
       master_only: false)
+  end
+
+  def zrangebyscorethenrem(key, min, max, options = {})
+    send_cluster_command([:zrangebyscorethenrem, key, min, max, options])
   end
 
   def zrank(key, member)
