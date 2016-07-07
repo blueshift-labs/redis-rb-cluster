@@ -34,6 +34,8 @@ class RedisCluster
   RedisClusterRequestTTL = 16
   RedisClusterDefaultTimeout = 1
 
+  attr_reader :connections
+
   # Initialise the client
 
   # @param [Fixnum] number of connections in each connection pool
