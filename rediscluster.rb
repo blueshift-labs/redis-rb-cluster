@@ -165,6 +165,8 @@ class RedisCluster
       return nil
     when "bitop"
       return argv[2]
+    when "eval","evalsha"
+      return argv[2][0]
     else
       # Unknown commands, and all the commands having the key
       # as first argument are handled here:
@@ -336,6 +338,24 @@ class RedisCluster
 
   def decrby(key, decrement)
     send_cluster_command([:decrby, key, decrement])
+  end
+
+  def _eval(command, args)
+      script = args.shift
+      options = args.pop if args.last.is_a?(Hash)
+      options ||= {}
+      keys = args.shift || options[:keys] || []
+      argv = args.shift || options[:argv] || []
+      _check_keys_in_same_slot(keys)
+      send_cluster_command([command, script, keys, argv])
+  end
+
+  def eval(*args)
+      _eval(:eval, args)
+  end
+
+  def evalsha(*args)
+     _eval(:evalsha, args)
   end
 
   def get(key)
