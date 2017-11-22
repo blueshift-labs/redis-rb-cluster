@@ -30,6 +30,8 @@ require_relative 'lib/exceptions'
 
 class RedisCluster
 
+  class SlotMovedError < RuntimeError; end
+
   RedisClusterHashSlots = 16384
   RedisClusterRequestTTL = 16
   RedisClusterDefaultTimeout = 1
@@ -165,7 +167,7 @@ class RedisCluster
       return nil
     when "bitop"
       return argv[2]
-    when "eval","evalsha"
+    when "eval", "evalsha"
       return argv[2][0]
     else
       # Unknown commands, and all the commands having the key
@@ -230,7 +232,13 @@ class RedisCluster
         end
       end
     end
-    raise "Too many Cluster redirections? (last error: #{e})"
+
+    errv = e.to_s.split
+    if errv[0] == "MOVED" || errv[0] == "ASK"
+      raise SlotMovedError.new(e.message)
+    else
+      raise "Too many Cluster redirections? (last error: #{e})"
+    end
   end
 
   # Some commands are not implemented yet
@@ -341,21 +349,21 @@ class RedisCluster
   end
 
   def _eval(command, args)
-      script = args.shift
-      options = args.pop if args.last.is_a?(Hash)
-      options ||= {}
-      keys = args.shift || options[:keys] || []
-      argv = args.shift || options[:argv] || []
-      _check_keys_in_same_slot(keys)
-      send_cluster_command([command, script, keys, argv])
+    script = args.shift
+    options = args.pop if args.last.is_a?(Hash)
+    options ||= {}
+    keys = args.shift || options[:keys] || []
+    argv = args.shift || options[:argv] || []
+    _check_keys_in_same_slot(keys)
+    send_cluster_command([command, script, keys, argv])
   end
 
   def eval(*args)
-      _eval(:eval, args)
+    _eval(:eval, args)
   end
 
   def evalsha(*args)
-     _eval(:evalsha, args)
+    _eval(:evalsha, args)
   end
 
   def get(key)
