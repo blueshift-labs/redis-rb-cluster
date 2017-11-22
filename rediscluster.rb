@@ -81,7 +81,7 @@ class RedisCluster
         dns_cache[ip] = host
         host
       }
-      name = "#{host}:#{port}"
+      name = "#{ip}:#{port}"
       role = index == 0 ? 'master' : 'slave'
       node = {
         :host => host, :port => port,
@@ -186,14 +186,18 @@ class RedisCluster
     ttl = RedisClusterRequestTTL; # Max number of redirections
     e = ""
     asking = false
+    ask_redirect_node = nil
     try_random_node = false
     while ttl > 0
       ttl -= 1
       initialize_slots_cache if @refresh_table_asap
-      raise "No way to dispatch this command to Redis Cluster." if !key
+      raise CommandDispatchError.new("No way to dispatch this command to Redis Cluster.") if !key
       if try_random_node
         r = @connections.get_random_connection(master_only)
         try_random_node = false
+      elsif !ask_redirect_node.nil?
+        r = @connections.get_connection_by_node(ask_redirect_node)
+        ask_redirect_node = nil
       else
         r = @connections.get_connection_by_slot(slot, master_only)
       end
@@ -218,9 +222,9 @@ class RedisCluster
           end
           newslot = errv[1].to_i
           node_name = errv[2]
-          if !asking
-            ip, port = node_name.split(":")
-            node_name = "#{Resolv.getname(ip)}:#{port}"
+          if asking
+            ask_redirect_node = node_name
+          else
             @connections.update_slot!(newslot, [node_name])
           end
         elsif errv[0] == "CLUSTERDOWN"
@@ -232,13 +236,7 @@ class RedisCluster
         end
       end
     end
-
-    errv = e.to_s.split
-    if errv[0] == "MOVED" || errv[0] == "ASK"
-      raise SlotMovedError.new(e.message)
-    else
-      raise "Too many Cluster redirections? (last error: #{e})"
-    end
+    raise TooManyRedirections.new("Too many Cluster redirections? (last error: #{e})")
   end
 
   # Some commands are not implemented yet
