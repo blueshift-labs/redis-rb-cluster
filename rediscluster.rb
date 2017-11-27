@@ -30,8 +30,6 @@ require_relative 'lib/exceptions'
 
 class RedisCluster
 
-  class SlotMovedError < RuntimeError; end
-
   RedisClusterHashSlots = 16384
   RedisClusterRequestTTL = 16
   RedisClusterDefaultTimeout = 1
@@ -191,7 +189,7 @@ class RedisCluster
     while ttl > 0
       ttl -= 1
       initialize_slots_cache if @refresh_table_asap
-      raise CommandDispatchError.new("No way to dispatch this command to Redis Cluster.") if !key
+      raise Exceptions::CommandDispatchError.new("No way to dispatch this command to Redis Cluster.") if !key
       if try_random_node
         r = @connections.get_random_connection(master_only)
         try_random_node = false
@@ -236,7 +234,7 @@ class RedisCluster
         end
       end
     end
-    raise TooManyRedirections.new("Too many Cluster redirections? (last error: #{e})")
+    raise Exceptions::TooManyRedirections.new("Too many Cluster redirections? (last error: #{e})")
   end
 
   # Some commands are not implemented yet
