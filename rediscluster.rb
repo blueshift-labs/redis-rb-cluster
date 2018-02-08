@@ -59,7 +59,7 @@ class RedisCluster
     "#<#{self.class.name}: @connections=#{@connections.inspect}, @startup_nodes=#{@startup_nodes}>"
   end
 
-  def get_redis_link(host,port)
+  def get_redis_link(host, port)
     opt = @conn_opt.dup
     opt[:host] = host
     opt[:port] = port
@@ -73,16 +73,10 @@ class RedisCluster
     ret = []
     nodes.each_with_index do |item, index|
       ip, port = item
-      host = dns_cache.fetch(ip) {
-        |missing_ip|
-        host = Resolv.getname(missing_ip)
-        dns_cache[ip] = host
-        host
-      }
       name = "#{ip}:#{port}"
       role = index == 0 ? 'master' : 'slave'
       node = {
-        :host => host, :port => port,
+        :host => ip, :port => port,
         :name => name, :ip => ip,
         :role => role
       }
@@ -96,15 +90,15 @@ class RedisCluster
   def initialize_slots_cache
     startup_nodes_reachable = false
     dns_cache = {}
-    @startup_nodes.each{|n|
+    @startup_nodes.each { |n|
       begin
         nodes = []
-        r = get_redis_link(n[:host],n[:port])
+        r = get_redis_link(n[:host], n[:port])
         r.cluster("slots").each {|r|
           slot_nodes = fetch_nodes(r[2..-1], dns_cache)
           nodes += slot_nodes
-          node_names = slot_nodes.map { |x| x[:name]}.compact
-          (r[0]..r[1]).each{|slot|
+          node_names = slot_nodes.map { |x| x[:name] }.compact
+          (r[0]..r[1]).each { |slot|
             @connections.update_slot!(slot, node_names)
           }
           @connections.init_node_pool(slot_nodes)
