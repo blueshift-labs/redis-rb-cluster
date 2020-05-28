@@ -776,6 +776,11 @@ class RedisCluster
     send_cluster_command([:exists, key], master_only: false)
   end
 
+  def rename(key, newkey)
+    _check_keys_in_same_slot([key, newkey])
+    send_cluster_command([:rename, key, newkey])
+  end
+
   def expire(key, seconds)
     send_cluster_command([:expire, key, seconds])
   end
