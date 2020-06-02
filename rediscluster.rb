@@ -520,8 +520,8 @@ class RedisCluster
   end
 
   # set commands
-  def sadd(key, member)
-    send_cluster_command([:sadd, key, member])
+  def sadd(key, *members)
+    send_cluster_command([:sadd, key, *members])
   end
 
   def scard(key)
